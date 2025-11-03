@@ -19,7 +19,7 @@ export async function GET(){
 
       let response;
       let retries = 0;
-      const maxRetries = 2;
+      const maxRetries = 1;
       while (retries <= maxRetries) {
         response = await fetch(apiUrl, {
           method: 'POST',
