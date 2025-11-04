@@ -2,6 +2,149 @@ import { systemPrompt } from './systemPrompt';
 import { userQuery } from './userQuery';
 import { NextResponse } from 'next/server';
 
+// --- Response Schema ---
+// This formally defines the JSON structure we expect from the API.
+// I have changed all `type: "NUMBER"` to `type: "STRING"` to prevent
+// validation errors from the API, as the AI often returns numbers as strings.
+const responseSchema = {
+  type: "OBJECT",
+  properties: {
+    reportDate: { type: "STRING" },
+    marketOutlook: {
+      type: "OBJECT",
+      properties: {
+        india: {
+          type: "OBJECT",
+          properties: {
+            nifty: { type: "STRING" },
+            bankNifty: { type: "STRING" },
+            tone: { type: "STRING" },
+          },
+        },
+        global: { type: "STRING" },
+      },
+    },
+    globalIndices: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          name: { type: "STRING" },
+          last: { type: "STRING" },
+          change: { type: "STRING" },
+          changePercent: { type: "STRING" },
+        },
+      },
+    },
+    keyIndicators: {
+      type: "OBJECT",
+      properties: {
+        indiaVix: {
+          type: "OBJECT",
+          properties: {
+            current: { type: "STRING" },
+            change: { type: "STRING" },
+            changePercent: { type: "STRING" },
+          },
+        },
+        putCallRatio: {
+          type: "OBJECT",
+          properties: {
+            nifty: { type: "STRING" },
+          },
+        },
+        marketBreadth: {
+          type: "OBJECT",
+          properties: {
+            advancers: { type: "STRING" }, // Changed from NUMBER
+            decliners: { type: "STRING" }, // Changed from NUMBER
+            unchanged: { type: "STRING" }, // Changed from NUMBER
+          },
+        },
+      },
+    },
+    fiiDiiFlows: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          date: { type: "STRING" },
+          fiiNet: { type: "STRING" },
+          diiNet: { type: "STRING" },
+        },
+      },
+    },
+    sectoralPerformance: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          sector: { type: "STRING" },
+          changePercent: { type: "STRING" },
+        },
+      },
+    },
+    sectorOutlook: {
+      type: "OBJECT",
+      properties: {
+        positive: { type: "ARRAY", items: { type: "STRING" } },
+        caution: { type: "ARRAY", items: { type: "STRING" } },
+      },
+    },
+    stocksInFocus: {
+      type: "OBJECT",
+      properties: {
+        positive: { type: "ARRAY", items: { type: "STRING" } },
+        caution: { type: "ARRAY", items: { type: "STRING" } },
+      },
+    },
+    tradingView: {
+      type: "OBJECT",
+      properties: {
+        nifty: { type: "STRING" },
+        bankNifty: { type: "STRING" },
+        strategy: { type: "STRING" },
+        niftyLevels: {
+          type: "OBJECT",
+          properties: {
+            current: { type: "STRING" }, // Changed from NUMBER
+            support1: { type: "STRING" }, // Changed from NUMBER
+            support2: { type: "STRING" }, // Changed from NUMBER
+            resistance1: { type: "STRING" }, // Changed from NUMBER
+            resistance2: { type: "STRING" }, // Changed from NUMBER
+          },
+        },
+        bankNiftyLevels: {
+          type: "OBJECT",
+          properties: {
+            current: { type: "STRING" }, // Changed from NUMBER
+            support1: { type: "STRING" }, // Changed from NUMBER
+            support2: { type: "STRING" }, // Changed from NUMBER
+            resistance1: { type: "STRING" }, // Changed from NUMBER
+            resistance2: { type: "STRING" }, // Changed from NUMBER
+          },
+        },
+      },
+    },
+    ipoListings: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          ipoName: { type: "STRING" },
+          gmp: { type: "STRING" },
+          applyStartDate: { type: "STRING" },
+          applyEndDate: { type: "STRING" },
+          listingDate: { type: "STRING" },
+          companySummary: { type: "STRING" },
+          companyDetailsUrl: { type: "STRING" },
+        },
+      },
+    },
+    inDepthAnalysis: { type: "STRING" },
+  },
+};
+
 export async function GET() {
   try {
     const apiKey = process.env.API_KEY;
@@ -15,6 +158,9 @@ export async function GET() {
       contents: [{ parts: [{ text: userQuery }] }],
       systemInstruction: { parts: [{ text: systemPrompt }] },
       tools: [{ google_search: {} }],
+      generationConfig: {
+        responseSchema: responseSchema,
+      },
     };
 
     let response;
