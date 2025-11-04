@@ -9,8 +9,10 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  BarChart,
+  Bar,
+  Legend,
 } from "recharts";
-
 import {
   RefreshCw,
   Share2,
@@ -22,67 +24,52 @@ import {
   Newspaper,
   Check,
   ExternalLink,
+  BarChart as BarChartIcon,
+  Package,
+  Calendar,
+  Layers,
+  Activity,
+  Ratio,
+  Percent,
 } from "lucide-react";
 
-// --- Mock Data based on your provided text ---
-// This is used for the initial state before the first API call
+// --- Mock Data ---
+// Updated to include all new fields from the API schema
 const getInitialData = () => ({
-  reportDate: "November 3, 2025 (Monday)",
+  reportDate: "Loading...",
   marketOutlook: {
-    india: {
-      nifty: "Nifty close: 25,722 | Range: 25,500–26,100",
-      bankNifty: "Fatigued after rally, 57,500 key support.",
-      tone: "Cautious consolidation, profit-booking likely.",
-    },
-    global:
-      "Fed cut (25 bps) → liquidity positive, but hawkish commentary tempers mood. US-India trade talks rhetoric positive, but 50% tariffs hurting exports. Rupee weak, importers under pressure. (Near all-time low ~88.70/USD)",
+    india: { nifty: "...", bankNifty: "...", tone: "..." },
+    global: "...",
   },
-  // New section for Global Indices
   globalIndices: [
-    {
-      name: "Dow Jones",
-      last: "45,952.24",
-      change: "-301.07",
-      changePercent: "-0.65%",
-    },
-    {
-      name: "NASDAQ",
-      last: "17,800.12",
-      change: "+50.45",
-      changePercent: "+0.28%",
-    },
-    {
-      name: "FTSE 100",
-      last: "8,300.50",
-      change: "-12.10",
-      changePercent: "-0.15%",
-    },
-    {
-      name: "Nikkei 225",
-      last: "39,450.00",
-      change: "+150.20",
-      changePercent: "+0.38%",
-    },
+    { name: "Dow Jones", last: "...", change: "...", changePercent: "..." },
+    { name: "NASDAQ", last: "...", change: "...", changePercent: "..." },
   ],
-  // NEW: Split Sector and Stock data
+  keyIndicators: {
+    indiaVix: { current: "...", change: "...", changePercent: "..." },
+    putCallRatio: { nifty: "..." },
+    marketBreadth: { advancers: 0, decliners: 0, unchanged: 0 },
+  },
+  fiiDiiFlows: [
+    { date: "YYYY-MM-DD", fiiNet: "...", diiNet: "..." },
+    { date: "YYYY-MM-DD", fiiNet: "...", diiNet: "..." },
+  ],
+  sectoralPerformance: [
+    { sector: "Nifty IT", changePercent: "..." },
+    { sector: "Nifty Bank", changePercent: "..." },
+  ],
   sectorOutlook: {
-    positive: ["PSU Banks (Resilience)", "IT (Rupee tailwind)"],
-    caution: ["Small-caps (SEBI overhang)", "Rupee-sensitive (Chemicals)"],
+    positive: ["..."],
+    caution: ["..."],
   },
   stocksInFocus: {
-    positive: [
-      "ITC (Strong outlook)",
-      "L&T (Order book)",
-      "DLF (Pre-sales)",
-      "Ashoka Buildcon (Breakout)",
-    ],
-    caution: ["Select Small-caps"],
+    positive: ["..."],
+    caution: ["..."],
   },
   tradingView: {
-    nifty: "Support: 25,700–25,500 | Resistance: 26,000–26,100",
-    bankNifty: "Resistance: 58,200–58,500",
-    strategy: "Stay stock-specific, use strict SL (volatility high).",
-    // New structured data for charts
+    nifty: "...",
+    bankNifty: "...",
+    strategy: "...",
     niftyLevels: {
       current: 25722,
       support1: 25700,
@@ -93,20 +80,94 @@ const getInitialData = () => ({
     bankNiftyLevels: {
       current: 57776,
       support1: 57500,
-      support2: 57200, // Added mock S2
+      support2: 57200,
       resistance1: 58200,
       resistance2: 58500,
     },
   },
-  inDepthAnalysis:
-    "Deconstructing the Previous Session (October 31, 2025): The Anatomy of a Pullback\n\nThe Indian equity markets concluded the previous week on a decidedly weak footing, with headline indices ending sharply lower for the second consecutive session. This pullback signals that profit-booking has gained significant momentum following a robust rally throughout October...\n\n(Full analysis would be populated here by the API)",
+  ipoListings: [
+    {
+      ipoName: "...",
+      gmp: "...",
+      applyStartDate: "...",
+      applyEndDate: "...",
+      listingDate: "...",
+      companySummary: "...",
+      companyDetailsUrl: "#",
+    },
+  ],
+  inDepthAnalysis: "Loading analysis...",
 });
 
-// --- Helper Functions ---
+// --- Type Definitions ---
+// Define types for the data structures
+type GlobalIndex = {
+  name: string;
+  last: string;
+  change: string;
+  changePercent: string;
+};
+type FiiDiiFlow = {
+  date: string;
+  fiiNet: string;
+  diiNet: string;
+};
+type SectorPerformance = {
+  sector: string;
+  changePercent: string;
+};
+type IpoListing = {
+  ipoName: string;
+  gmp: string;
+  applyStartDate: string;
+  applyEndDate: string;
+  listingDate: string;
+  companySummary: string;
+  companyDetailsUrl: string;
+};
+type ReportData = {
+  reportDate: string;
+  marketOutlook: {
+    india: { nifty: string; bankNifty: string; tone: string };
+    global: string;
+  };
+  globalIndices: GlobalIndex[];
+  keyIndicators: {
+    indiaVix: { current: string; change: string; changePercent: string };
+    putCallRatio: { nifty: string };
+    marketBreadth: { advancers: number; decliners: number; unchanged: number };
+  };
+  fiiDiiFlows: FiiDiiFlow[];
+  sectoralPerformance: SectorPerformance[];
+  sectorOutlook: { positive: string[]; caution: string[] };
+  stocksInFocus: { positive: string[]; caution: string[] };
+  tradingView: {
+    nifty: string;
+    bankNifty: string;
+    strategy: string;
+    niftyLevels: {
+      current: number;
+      support1: number;
+      support2: number;
+      resistance1: number;
+      resistance2: number;
+    };
+    bankNiftyLevels: {
+      current: number;
+      support1: number;
+      support2: number;
+      resistance1: number;
+      resistance2: number;
+    };
+  };
+  ipoListings: IpoListing[];
+  inDepthAnalysis: string;
+};
+
+// --- Helper Components ---
 
 /**
  * A reusable card component for displaying content sections.
- * @param {{title: string, icon: React.ReactNode, children: React.ReactNode, className?: string}} props
  */
 interface InfoCardProps {
   title: string;
@@ -114,7 +175,6 @@ interface InfoCardProps {
   children: ReactNode;
   className?: string;
 }
-
 const InfoCard: React.FC<InfoCardProps> = ({
   title,
   icon,
@@ -134,13 +194,11 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
 /**
  * A component for the list items in the "Stocks in Focus" card.
- * @param {{items: string[], type: 'positive' | 'caution'}} props
  */
 interface StockListProps {
   items: string[];
   type: "positive" | "caution";
 }
-
 const StockList: React.FC<StockListProps> = ({ items, type }) => {
   const Icon = type === "positive" ? TrendingUp : AlertTriangle;
   const color = type === "positive" ? "text-green-400" : "text-yellow-400";
@@ -148,8 +206,8 @@ const StockList: React.FC<StockListProps> = ({ items, type }) => {
   return (
     <ul className="space-y-2">
       {items.map((item, index) => (
-        <li key={index} className="flex items-center">
-          <Icon className={`w-5 h-5 mr-2 ${color}`} />
+        <li key={index} className="flex items-start">
+          <Icon className={`w-5 h-5 mr-2 flex-shrink-0 ${color}`} />
           <span>{item}</span>
         </li>
       ))}
@@ -158,122 +216,191 @@ const StockList: React.FC<StockListProps> = ({ items, type }) => {
 };
 
 /**
- * Extracts a JSON object from a string that might contain other text or markdown.
- * @param {string} text - The raw text response from the API.
- * @returns {object} The parsed JSON object.
+ * Gets the color for FII/DII flow values.
  */
-function extractJson(text: string) {
-  // Find the first '{' and the last '}' to extract the JSON block
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch && jsonMatch[0]) {
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.error("Failed to parse extracted JSON:", e);
-      throw new Error("Response was not valid JSON.");
-    }
-  }
-  console.error("No JSON object found in response:", text);
-  throw new Error("No valid JSON object found in the response.");
-}
+const getFlowColor = (value: number) => {
+  if (value > 0) return "text-green-400";
+  if (value < 0) return "text-red-400";
+  return "text-gray-400";
+};
 
-// --- Removed TradingView Widget Component ---
+/**
+ * Parses a currency string (e.g., "1,234 Cr" or "-567 Cr") into a number.
+ */
+const parseFlow = (flowStr: string): number => {
+  if (!flowStr || typeof flowStr !== "string") return 0;
+  const num = parseFloat(flowStr.replace(/,/g, "").replace(" Cr", ""));
+  return isNaN(num) ? 0 : num;
+};
+
+/**
+ * Gets the Tailwind CSS background color class for a sector's performance.
+ */
+const getHeatmapColor = (percentStr: string): string => {
+  if (!percentStr || typeof percentStr !== "string") return "bg-gray-700";
+  const value = parseFloat(percentStr.replace("%", ""));
+  if (isNaN(value)) return "bg-gray-700";
+
+  if (value > 2) return "bg-green-700 hover:bg-green-600";
+  if (value > 0.5) return "bg-green-600 hover:bg-green-500";
+  if (value > 0) return "bg-green-800 hover:bg-green-700";
+  if (value < -2) return "bg-red-700 hover:bg-red-600";
+  if (value < -0.5) return "bg-red-600 hover:bg-red-500";
+  if (value < 0) return "bg-red-800 hover:bg-red-700";
+  return "bg-gray-700 hover:bg-gray-600";
+};
+
+/**
+ * Displays the sectoral performance as a heatmap.
+ */
+const SectorHeatmap: React.FC<{ sectors: SectorPerformance[] }> = ({
+  sectors,
+}) => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    {sectors.map((sector) => (
+      <div
+        key={sector.sector}
+        className={`rounded-lg p-3 text-white transition-all duration-200 ${getHeatmapColor(
+          sector.changePercent
+        )}`}
+      >
+        <div className="font-semibold">{sector.sector}</div>
+        <div className="text-lg">{sector.changePercent}</div>
+      </div>
+    ))}
+  </div>
+);
+
+/**
+ * Displays the IPO listings in a table.
+ */
+const IpoTable: React.FC<{ ipos: IpoListing[] }> = ({ ipos }) => (
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-700">
+      <thead className="bg-gray-800">
+        <tr>
+          <th
+            scope="col"
+            className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+          >
+            IPO Name
+          </th>
+          <th
+            scope="col"
+            className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+          >
+            Apply Dates
+          </th>
+          <th
+            scope="col"
+            className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+          >
+            Listing Date
+          </th>
+          <th
+            scope="col"
+            className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+          >
+            GMP
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-gray-900 divide-y divide-gray-700">
+        {ipos.map((ipo) => (
+          <tr key={ipo.ipoName} className="hover:bg-gray-800">
+            <td className="py-4 px-4 whitespace-nowrap">
+              <a
+                href={ipo.companyDetailsUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-white hover:text-blue-400 hover:underline inline-flex items-center"
+              >
+                {ipo.ipoName}
+                <ExternalLink className="w-4 h-4 ml-1.5 flex-shrink-0" />
+              </a>
+              <div className="text-xs text-gray-400 truncate max-w-xs">
+                {ipo.companySummary}
+              </div>
+            </td>
+            <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-300">
+              {ipo.applyStartDate} to {ipo.applyEndDate}
+            </td>
+            <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-300">
+              {ipo.listingDate}
+            </td>
+            <td className="py-4 px-4 whitespace-nowrap text-sm font-medium text-white">
+              {ipo.gmp}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
 
 // --- Main Application Component ---
 
 export default function App() {
-  const [reportData, setReportData] = useState(getInitialData());
-  const [sources, setSources] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState<ReportData>(getInitialData());
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("market");
 
   /**
-   * Fetches the market report from the Gemini API.
+   * Fetches the market report from the Next.js API route.
    */
   const fetchMarketData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    console.log("Fetching new market data...");
+    console.log("Fetching new market data from /api/marketReport...");
 
     try {
       const response = await fetch("/api/marketReport");
-      const result = await response.json();
 
-      const candidate = result?.candidates?.[0];
-      if (!candidate?.content?.parts?.[0]?.text) {
-        throw new Error("Invalid response format");
-      }
-
-      if (candidate && candidate.content?.parts?.[0]?.text) {
-        // 1. Extract the JSON data
-        const responseText = candidate.content.parts[0].text;
-        const jsonData = extractJson(responseText);
-
-        // --- DATA VALIDATION ---
-        // Ensure the nested level objects exist before setting state
-        if (
-          !jsonData.tradingView ||
-          !jsonData.tradingView.niftyLevels ||
-          !jsonData.tradingView.bankNiftyLevels ||
-          !jsonData.globalIndices ||
-          !Array.isArray(jsonData.globalIndices) ||
-          !jsonData.sectorOutlook || // Added validation
-          !jsonData.stocksInFocus // Added validation
-        ) {
-          console.error("API Response missing structured data:", jsonData);
-          throw new Error(
-            "API did not return the required structured data (levels, indices, sectors, or stocks)."
-          );
-        }
-
-        setReportData(jsonData);
-
-        // 2. Extract grounding sources
-        let sourceLinks = [];
-        const groundingMetadata = candidate.groundingMetadata;
-        if (groundingMetadata && groundingMetadata.groundingChunks) {
-          sourceLinks = groundingMetadata.groundingChunks
-            .map((chunk: { web: { uri: string; title: string } }) => ({
-              uri: chunk.web?.uri,
-              title: chunk.web?.title,
-            }))
-            .filter(
-              (source: { uri: string; title: string }) =>
-                source.uri && source.title
-            ) // Ensure sources are valid
-            .filter(
-              (
-                source: { uri: string; title: string },
-                index: number,
-                self: Array<{ uri: string }>
-              ) =>
-                index ===
-                self.findIndex((s: { uri: string }) => s.uri === source.uri)
-            );
-        }
-        setSources(sourceLinks);
-        console.log("Data fetched successfully:", jsonData);
-        console.log("Sources found:", sourceLinks);
-      } else if (result.promptFeedback) {
-        // Handle cases where the prompt was blocked
-        console.error("Request blocked:", result.promptFeedback);
+      if (!response.ok) {
+        // Handle API errors (like 500)
+        const errorData = await response.json();
         throw new Error(
-          `Request was blocked: ${result.promptFeedback.blockReason}`
+          errorData.error || `API Error: ${response.statusText}`
         );
-      } else {
-        throw new Error("Invalid response structure from API.");
       }
+
+      const jsonData: ReportData = await response.json();
+
+      // --- DATA VALIDATION ---
+      // Ensure all required top-level keys are present
+      const requiredKeys: (keyof ReportData)[] = [
+        "tradingView",
+        "globalIndices",
+        "sectorOutlook",
+        "stocksInFocus",
+        "keyIndicators",
+        "fiiDiiFlows",
+        "sectoralPerformance",
+        "ipoListings",
+      ];
+
+      for (const key of requiredKeys) {
+        if (!jsonData[key]) {
+          console.error(`API Response missing key: ${key}`, jsonData);
+          throw new Error(`API response missing required data: ${key}.`);
+        }
+      }
+
+      setReportData(jsonData);
+      console.log("Data fetched successfully:", jsonData);
     } catch (err: unknown) {
       console.error("Failed to fetch market data:", err);
-
+      let message = "Something went wrong";
       if (err instanceof Error) {
-        setError(err.message);
+        message = err.message;
       } else if (typeof err === "string") {
-        setError(err);
-      } else {
-        setError("Something went wrong");
+        message = err;
       }
+      setError(message);
+      // Keep old data on error, don't reset
+      // setReportData(getInitialData());
     } finally {
       setLoading(false);
     }
@@ -293,7 +420,7 @@ export default function App() {
     // Create a temporary textarea to use document.execCommand('copy')
     const textArea = document.createElement("textarea");
     textArea.value = shareText;
-    textArea.style.position = "fixed"; // Avoid scrolling to bottom
+    textArea.style.position = "fixed";
     textArea.style.top = "0";
     textArea.style.left = "0";
     document.body.appendChild(textArea);
@@ -310,12 +437,13 @@ export default function App() {
       }
     } catch (err) {
       console.error("Failed to copy text: ", err);
-      // Fallback for browsers that don't support execCommand
       alert("Failed to copy. Please copy the text manually.");
     }
 
     document.body.removeChild(textArea);
   };
+
+  // --- Memoized Data for Charts ---
 
   // Safely get chart levels from report data
   const niftyLevels = reportData.tradingView?.niftyLevels || {};
@@ -324,45 +452,47 @@ export default function App() {
   // Create dynamic chart data based on API's current value
   const dynamicNiftyChartData = useMemo(
     () => [
-      {
-        time: "Start",
-        value: niftyLevels.current ? niftyLevels.current - 20 : 25700,
-      },
-      {
-        time: "Mid",
-        value: niftyLevels.current ? niftyLevels.current + 30 : 25750,
-      },
-      { time: "Current", value: niftyLevels.current || 25722 },
+      { time: "Start", value: niftyLevels.current - 20 },
+      { time: "Mid", value: niftyLevels.current + 30 },
+      { time: "Current", value: niftyLevels.current },
     ],
     [niftyLevels.current]
   );
 
   const dynamicBankNiftyChartData = useMemo(
     () => [
-      {
-        time: "Start",
-        value: bankNiftyLevels.current ? bankNiftyLevels.current - 50 : 57700,
-      },
-      {
-        time: "Mid",
-        value: bankNiftyLevels.current ? bankNiftyLevels.current + 80 : 57850,
-      },
-      { time: "Current", value: bankNiftyLevels.current || 57776 },
+      { time: "Start", value: bankNiftyLevels.current - 50 },
+      { time: "Mid", value: bankNiftyLevels.current + 80 },
+      { time: "Current", value: bankNiftyLevels.current },
     ],
     [bankNiftyLevels.current]
   );
 
   // Define Y-axis domain for charts
-  const niftyDomain = [
+  const niftyDomain: [number, number] = [
     Math.min(niftyLevels.support2 || 25500) - 50,
     Math.max(niftyLevels.resistance2 || 26100) + 50,
   ];
-  const bankNiftyDomain = [
+  const bankNiftyDomain: [number, number] = [
     Math.min(bankNiftyLevels.support2 || 57200) - 100,
     Math.max(bankNiftyLevels.resistance2 || 58500) + 100,
   ];
 
-  // Safely get sector and stock data
+  // Process FII/DII data for the bar chart
+  const fiiDiiChartData = useMemo(() => {
+    return (reportData.fiiDiiFlows || [])
+      .map((flow) => ({
+        date: new Date(flow.date).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+        }),
+        FII: parseFlow(flow.fiiNet),
+        DII: parseFlow(flow.diiNet),
+      }))
+      .reverse(); // Show oldest data first
+  }, [reportData.fiiDiiFlows]);
+
+  // Safely get all other data
   const sectorOutlook = reportData.sectorOutlook || {
     positive: [],
     caution: [],
@@ -371,10 +501,36 @@ export default function App() {
     positive: [],
     caution: [],
   };
+  const keyIndicators = reportData.keyIndicators || {
+    indiaVix: {},
+    putCallRatio: {},
+    marketBreadth: {},
+  };
+  const globalIndices = reportData.globalIndices || [];
+  const sectoralPerformance = reportData.sectoralPerformance || [];
+  const ipoListings = reportData.ipoListings || [];
+
+  // --- Tab Button Component ---
+  const TabButton: React.FC<{
+    title: string;
+    tabName: string;
+    active: boolean;
+  }> = ({ title, tabName, active }) => (
+    <button
+      onClick={() => setActiveTab(tabName)}
+      className={`font-semibold py-2 px-4 rounded-t-lg transition-colors duration-200 ${
+        active
+          ? "text-white bg-gray-800"
+          : "text-gray-400 hover:text-white"
+      }`}
+    >
+      {title}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 font-sans p-4 md:p-8 relative pb-20">
-      <header className="flex justify-between items-center mb-6">
+      <header className="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-white">
             Things to Know Today
@@ -384,7 +540,7 @@ export default function App() {
         <button
           onClick={fetchMarketData}
           disabled={loading}
-          className="flex items-center bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105"
+          className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105"
         >
           {loading ? (
             <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
@@ -405,361 +561,484 @@ export default function App() {
         </div>
       )}
 
-      {/* --- Main Content Grid --- */}
+      {/* --- Tabs --- */}
+      <nav className="flex border-b border-gray-700 mb-6">
+        <TabButton
+          title="Market Report"
+          tabName="market"
+          active={activeTab === "market"}
+        />
+        <TabButton
+          title="IPO Listings"
+          tabName="ipo"
+          active={activeTab === "ipo"}
+        />
+      </nav>
+
+      {/* --- Main Content --- */}
       <main className="space-y-6">
-        {/* --- Top Row --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* --- Market Outlook --- */}
-          <InfoCard
-            title="Market Outlook"
-            icon={<Landmark className="w-6 h-6" />}
-            className="lg:col-span-1"
-          >
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-                <span className="w-5 h-5 mr-2 rounded-full">🇮🇳</span> India
-              </h3>
-              <p>
-                <strong className="text-gray-200">Nifty:</strong>{" "}
-                {reportData.marketOutlook.india.nifty}
-              </p>
-              <p>
-                <strong className="text-gray-200">Bank Nifty:</strong>{" "}
-                {reportData.marketOutlook.india.bankNifty}
-              </p>
-              <p>
-                <strong className="text-gray-200">Tone:</strong>{" "}
-                {reportData.marketOutlook.india.tone}
-              </p>
+        {/* --- Market Tab Content --- */}
+        {activeTab === "market" && (
+          <div className="space-y-6">
+            {/* --- Top Row --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* --- Market Outlook --- */}
+              <InfoCard
+                title="Market Outlook"
+                icon={<Landmark className="w-6 h-6" />}
+                className="lg:col-span-1"
+              >
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
+                    <span className="w-5 h-5 mr-2 rounded-full">🇮🇳</span> India
+                  </h3>
+                  <p>
+                    <strong className="text-gray-200">Nifty:</strong>{" "}
+                    {reportData.marketOutlook.india.nifty}
+                  </p>
+                  <p>
+                    <strong className="text-gray-200">Bank Nifty:</strong>{" "}
+                    {reportData.marketOutlook.india.bankNifty}
+                  </p>
+                  <p>
+                    <strong className="text-gray-200">Tone:</strong>{" "}
+                    {reportData.marketOutlook.india.tone}
+                  </p>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
+                    <Globe className="w-5 h-5 mr-2" /> Global
+                  </h3>
+                  <p>{reportData.marketOutlook.global}</p>
+                </div>
+              </InfoCard>
+
+              {/* --- Global Indices --- */}
+              <InfoCard
+                title="Global Market Snapshot"
+                icon={<Globe className="w-6 h-6" />}
+                className="lg:col-span-1"
+              >
+                <div className="flow-root">
+                  <table className="min-w-full divide-y divide-gray-700">
+                    <thead>
+                      <tr>
+                        <th
+                          scope="col"
+                          className="py-2 pr-2 text-left text-sm font-semibold text-white"
+                        >
+                          Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-2 py-2 text-right text-sm font-semibold text-white"
+                        >
+                          Last
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-2 py-2 text-right text-sm font-semibold text-white"
+                        >
+                          Chg. %
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {globalIndices.map((index) => {
+                        const isNegative =
+                          index.change && index.change.startsWith("-");
+                        return (
+                          <tr key={index.name}>
+                            <td className="py-2 pr-2 whitespace-nowrap text-sm font-medium text-gray-200">
+                              {index.name}
+                            </td>
+                            <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-300 text-right">
+                              {index.last}
+                            </td>
+                            <td
+                              className={`px-2 py-2 whitespace-nowrap text-sm font-medium text-right ${
+                                isNegative ? "text-red-400" : "text-green-400"
+                              }`}
+                            >
+                              {index.changePercent}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </InfoCard>
+
+              {/* --- Key Indicators (NEW) --- */}
+              <InfoCard
+                title="Key Indicators"
+                icon={<Activity className="w-6 h-6" />}
+              >
+                <div className="space-y-3">
+                  {/* India VIX */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-medium">
+                      India VIX
+                    </span>
+                    <div className="text-right">
+                      <span className="text-lg font-semibold text-white">
+                        {keyIndicators.indiaVix.current}
+                      </span>
+                      <span
+                        className={`ml-2 text-sm ${
+                          keyIndicators.indiaVix.change?.startsWith("-")
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }`}
+                      >
+                        {keyIndicators.indiaVix.change} (
+                        {keyIndicators.indiaVix.changePercent})
+                      </span>
+                    </div>
+                  </div>
+                  {/* Put-Call Ratio */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-medium">
+                      Nifty PCR
+                    </span>
+                    <span className="text-lg font-semibold text-white">
+                      {keyIndicators.putCallRatio.nifty}
+                    </span>
+                  </div>
+                  {/* Market Breadth */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-medium">
+                      Market Breadth
+                    </span>
+                    <div className="text-right">
+                      <span className="text-green-400">
+                        {keyIndicators.marketBreadth.advancers} Adv
+                      </span>{" "}
+                      /{" "}
+                      <span className="text-red-400">
+                        {keyIndicators.marketBreadth.decliners} Dec
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </InfoCard>
             </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-                <Globe className="w-5 h-5 mr-2" /> Global
-              </h3>
-              <p>{reportData.marketOutlook.global}</p>
-            </div>
-          </InfoCard>
 
-          {/* --- Global Indices (NEW) --- */}
-          <InfoCard
-            title="Global Market Snapshot"
-            icon={<Globe className="w-6 h-6" />}
-            className="lg:col-span-1"
-          >
-            <div className="flow-root">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead>
-                  <tr>
-                    <th
-                      scope="col"
-                      className="py-2 pr-2 text-left text-sm font-semibold text-white"
-                    >
-                      Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-2 py-2 text-right text-sm font-semibold text-white"
-                    >
-                      Last
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-2 py-2 text-right text-sm font-semibold text-white"
-                    >
-                      Chg. %
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {reportData.globalIndices &&
-                    reportData.globalIndices.map((index) => {
-                      const isNegative =
-                        index.change && index.change.startsWith("-");
-                      return (
-                        <tr key={index.name}>
-                          <td className="py-2 pr-2 whitespace-nowrap text-sm font-medium text-gray-200">
-                            {index.name}
-                          </td>
-                          <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-300 text-right">
-                            {index.last}
-                          </td>
-                          <td
-                            className={`px-2 py-2 whitespace-nowrap text-sm font-medium text-right ${
-                              isNegative ? "text-red-400" : "text-green-400"
-                            }`}
-                          >
-                            {index.changePercent}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-          </InfoCard>
+            {/* --- Second Row --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* --- Charts --- */}
+              <InfoCard
+                title="Index Charts"
+                icon={<TrendingUp className="w-6 h-6" />}
+                className="lg:col-span-2"
+              >
+                <p className="text-sm text-gray-400 mb-4">
+                  Illustrative charts showing current value against key
+                  API-provided levels.
+                </p>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {/* Nifty 50 Chart */}
+                  <div className="w-full h-64 md:h-80">
+                    <h3 className="text-lg font-semibold text-white mb-2 text-center">
+                      Nifty 50
+                    </h3>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={dynamicNiftyChartData}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#4B5563"
+                        />
+                        <XAxis dataKey="time" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" domain={niftyDomain} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#1F2937",
+                            border: "none",
+                            borderRadius: "8px",
+                          }}
+                          labelStyle={{ color: "#F9FAFB" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          name="Nifty 50"
+                          stroke="#818CF8"
+                          strokeWidth={2}
+                          dot={true}
+                        />
 
-          {/* --- Trading View --- */}
-          <InfoCard title="Trading View" icon={<Target className="w-6 h-6" />}>
-            <h3 className="text-lg font-semibold text-white">Nifty 50</h3>
-            <p className="text-sm">{reportData.tradingView.nifty}</p>
-            <h3 className="text-lg font-semibold text-white mt-3">
-              Bank Nifty
-            </h3>
-            <p className="text-sm">{reportData.tradingView.bankNifty}</p>
-            <h3 className="text-lg font-semibold text-white mt-3">Strategy</h3>
-            <p className="text-sm">{reportData.tradingView.strategy}</p>
-          </InfoCard>
-        </div>
+                        {/* Support and Resistance Lines */}
+                        {niftyLevels.support1 && (
+                          <ReferenceLine
+                            y={niftyLevels.support1}
+                            label={{
+                              value: `S1 (${niftyLevels.support1})`,
+                              position: "insideBottomLeft",
+                              fill: "#CA8A04",
+                            }}
+                            stroke="#CA8A04"
+                            strokeDasharray="3 3"
+                          />
+                        )}
+                        {niftyLevels.support2 && (
+                          <ReferenceLine
+                            y={niftyLevels.support2}
+                            label={{
+                              value: `S2 (${niftyLevels.support2})`,
+                              position: "insideBottomLeft",
+                              fill: "#CA8A04",
+                            }}
+                            stroke="#CA8A04"
+                            strokeDasharray="5 5"
+                          />
+                        )}
+                        {niftyLevels.resistance1 && (
+                          <ReferenceLine
+                            y={niftyLevels.resistance1}
+                            label={{
+                              value: `R1 (${niftyLevels.resistance1})`,
+                              position: "insideTopLeft",
+                              fill: "#16A34A",
+                            }}
+                            stroke="#16A34A"
+                            strokeDasharray="3 3"
+                          />
+                        )}
+                        {niftyLevels.resistance2 && (
+                          <ReferenceLine
+                            y={niftyLevels.resistance2}
+                            label={{
+                              value: `R2 (${niftyLevels.resistance2})`,
+                              position: "insideTopLeft",
+                              fill: "#16A34A",
+                            }}
+                            stroke="#16A34A"
+                            strokeDasharray="5 5"
+                          />
+                        )}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
 
-        {/* --- Second Row (NEW LAYOUT) --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* --- Charts --- */}
-          <InfoCard
-            title="Index Charts"
-            icon={<TrendingUp className="w-6 h-6" />}
-            className="lg:col-span-2"
-          >
-            <p className="text-sm text-gray-400 mb-4">
-              Illustrative charts showing current value against key API-provided
-              levels.
-            </p>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {/* Nifty 50 Chart */}
-              <div className="w-full h-64 md:h-80">
-                <h3 className="text-lg font-semibold text-white mb-2 text-center">
-                  Nifty 50
-                </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={dynamicNiftyChartData}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#4B5563" />
-                    <XAxis dataKey="time" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" domain={niftyDomain} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "none",
-                        borderRadius: "8px",
-                      }}
-                      labelStyle={{ color: "#F9FAFB" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      name="Nifty 50"
-                      stroke="#818CF8"
-                      strokeWidth={2}
-                      dot={true}
-                    />
+                  {/* Bank Nifty Chart */}
+                  <div className="w-full h-64 md:h-80">
+                    <h3 className="text-lg font-semibold text-white mb-2 text-center">
+                      Bank Nifty
+                    </h3>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={dynamicBankNiftyChartData}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#4B5563"
+                        />
+                        <XAxis dataKey="time" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" domain={bankNiftyDomain} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#1F2937",
+                            border: "none",
+                            borderRadius: "8px",
+                          }}
+                          labelStyle={{ color: "#F9FAFB" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          name="Bank Nifty"
+                          stroke="#F472B6"
+                          strokeWidth={2}
+                          dot={true}
+                        />
 
-                    {/* Support and Resistance Lines */}
-                    {niftyLevels.support1 && (
-                      <ReferenceLine
-                        y={niftyLevels.support1}
-                        label={{
-                          value: `S1 (${niftyLevels.support1})`,
-                          position: "insideBottomLeft",
-                          fill: "#CA8A04",
-                        }}
-                        stroke="#CA8A04"
-                        strokeDasharray="3 3"
-                      />
-                    )}
-                    {niftyLevels.support2 && (
-                      <ReferenceLine
-                        y={niftyLevels.support2}
-                        label={{
-                          value: `S2 (${niftyLevels.support2})`,
-                          position: "insideBottomLeft",
-                          fill: "#CA8A04",
-                        }}
-                        stroke="#CA8A04"
-                        strokeDasharray="5 5"
-                      />
-                    )}
-                    {niftyLevels.resistance1 && (
-                      <ReferenceLine
-                        y={niftyLevels.resistance1}
-                        label={{
-                          value: `R1 (${niftyLevels.resistance1})`,
-                          position: "insideTopLeft",
-                          fill: "#16A34A",
-                        }}
-                        stroke="#16A34A"
-                        strokeDasharray="3 3"
-                      />
-                    )}
-                    {niftyLevels.resistance2 && (
-                      <ReferenceLine
-                        y={niftyLevels.resistance2}
-                        label={{
-                          value: `R2 (${niftyLevels.resistance2})`,
-                          position: "insideTopLeft",
-                          fill: "#16A34A",
-                        }}
-                        stroke="#16A34A"
-                        strokeDasharray="5 5"
-                      />
-                    )}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+                        {/* Support and Resistance Lines */}
+                        {bankNiftyLevels.support1 && (
+                          <ReferenceLine
+                            y={bankNiftyLevels.support1}
+                            label={{
+                              value: `S1 (${bankNiftyLevels.support1})`,
+                              position: "insideBottomLeft",
+                              fill: "#CA8A04",
+                            }}
+                            stroke="#CA8A04"
+                            strokeDasharray="3 3"
+                          />
+                        )}
+                        {bankNiftyLevels.support2 && (
+                          <ReferenceLine
+                            y={bankNiftyLevels.support2}
+                            label={{
+                              value: `S2 (${bankNiftyLevels.support2})`,
+                              position: "insideBottomLeft",
+                              fill: "#CA8A04",
+                            }}
+                            stroke="#CA8A04"
+                            strokeDasharray="5 5"
+                          />
+                        )}
+                        {bankNiftyLevels.resistance1 && (
+                          <ReferenceLine
+                            y={bankNiftyLevels.resistance1}
+                            label={{
+                              value: `R1 (${bankNiftyLevels.resistance1})`,
+                              position: "insideTopLeft",
+                              fill: "#16A34A",
+                            }}
+                            stroke="#16A34A"
+                            strokeDasharray="3 3"
+                          />
+                        )}
+                        {bankNiftyLevels.resistance2 && (
+                          <ReferenceLine
+                            y={bankNiftyLevels.resistance2}
+                            label={{
+                              value: `R2 (${bankNiftyLevels.resistance2})`,
+                              position: "insideTopLeft",
+                              fill: "#16A34A",
+                            }}
+                            stroke="#16A34A"
+                            strokeDasharray="5 5"
+                          />
+                        )}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </InfoCard>
 
-              {/* Bank Nifty Chart */}
-              <div className="w-full h-64 md:h-80">
-                <h3 className="text-lg font-semibold text-white mb-2 text-center">
+              {/* --- Trading View --- */}
+              <InfoCard
+                title="Trading View"
+                icon={<Target className="w-6 h-6" />}
+              >
+                <h3 className="text-lg font-semibold text-white">Nifty 50</h3>
+                <p className="text-sm">{reportData.tradingView.nifty}</p>
+                <h3 className="text-lg font-semibold text-white mt-3">
                   Bank Nifty
                 </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={dynamicBankNiftyChartData}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#4B5563" />
-                    <XAxis dataKey="time" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" domain={bankNiftyDomain} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "none",
-                        borderRadius: "8px",
-                      }}
-                      labelStyle={{ color: "#F9FAFB" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      name="Bank Nifty"
-                      stroke="#F472B6"
-                      strokeWidth={2}
-                      dot={true}
-                    />
+                <p className="text-sm">{reportData.tradingView.bankNifty}</p>
+                <h3 className="text-lg font-semibold text-white mt-3">
+                  Strategy
+                </h3>
+                <p className="text-sm">{reportData.tradingView.strategy}</p>
+              </InfoCard>
+            </div>
 
-                    {/* Support and Resistance Lines */}
-                    {bankNiftyLevels.support1 && (
-                      <ReferenceLine
-                        y={bankNiftyLevels.support1}
-                        label={{
-                          value: `S1 (${bankNiftyLevels.support1})`,
-                          position: "insideBottomLeft",
-                          fill: "#CA8A04",
-                        }}
-                        stroke="#CA8A04"
+            {/* --- Third Row --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* --- FII/DII Flows (NEW) --- */}
+              <InfoCard
+                title="FII/DII Net Flows (Last 5 Days)"
+                icon={<BarChartIcon className="w-6 h-6" />}
+                className="lg:col-span-2"
+              >
+                <div className="w-full h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={fiiDiiChartData}
+                      margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                    >
+                      <CartesianGrid
                         strokeDasharray="3 3"
+                        stroke="#4B5563"
                       />
-                    )}
-                    {bankNiftyLevels.support2 && (
-                      <ReferenceLine
-                        y={bankNiftyLevels.support2}
-                        label={{
-                          value: `S2 (${bankNiftyLevels.support2})`,
-                          position: "insideBottomLeft",
-                          fill: "#CA8A04",
+                      <XAxis dataKey="date" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" label={{ value: 'Net Flow (Cr)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1F2937",
+                          border: "none",
+                          borderRadius: "8px",
                         }}
-                        stroke="#CA8A04"
-                        strokeDasharray="5 5"
+                        labelStyle={{ color: "#F9FAFB" }}
+                        formatter={(value: number) => [
+                          `${value.toFixed(0)} Cr`,
+                          null,
+                        ]}
                       />
-                    )}
-                    {bankNiftyLevels.resistance1 && (
-                      <ReferenceLine
-                        y={bankNiftyLevels.resistance1}
-                        label={{
-                          value: `R1 (${bankNiftyLevels.resistance1})`,
-                          position: "insideTopLeft",
-                          fill: "#16A34A",
-                        }}
-                        stroke="#16A34A"
-                        strokeDasharray="3 3"
-                      />
-                    )}
-                    {bankNiftyLevels.resistance2 && (
-                      <ReferenceLine
-                        y={bankNiftyLevels.resistance2}
-                        label={{
-                          value: `R2 (${bankNiftyLevels.resistance2})`,
-                          position: "insideTopLeft",
-                          fill: "#16A34A",
-                        }}
-                        stroke="#16A34A"
-                        strokeDasharray="5 5"
-                      />
-                    )}
-                  </LineChart>
-                </ResponsiveContainer>
+                      <Legend />
+                      <ReferenceLine y={0} stroke="#9CA3AF" strokeDasharray="3 3" />
+                      <Bar dataKey="FII" fill="#818CF8" />
+                      <Bar dataKey="DII" fill="#10B981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </InfoCard>
+
+              {/* --- Sector Outlook --- */}
+              <InfoCard
+                title="Sector Outlook"
+                icon={<TrendingUp className="w-6 h-6" />}
+                className="lg:col-span-1"
+              >
+                <h3 className="text-lg font-semibold text-green-400 mb-2">
+                  Positive
+                </h3>
+                <StockList items={sectorOutlook.positive} type="positive" />
+                <h3 className="text-lg font-semibold text-yellow-400 mt-4 mb-2">
+                  Caution
+                </h3>
+                <StockList items={sectorOutlook.caution} type="caution" />
+              </InfoCard>
+            </div>
+
+            {/* --- Fourth Row --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* --- Sector Heatmap (NEW) --- */}
+              <InfoCard
+                title="Sector Performance"
+                icon={<Layers className="w-6 h-6" />}
+                className="lg:col-span-2"
+              >
+                <SectorHeatmap sectors={sectoralPerformance} />
+              </InfoCard>
+
+              {/* --- Stocks in Focus --- */}
+              <InfoCard
+                title="Stocks in Focus"
+                icon={<Target className="w-6 h-6" />}
+                className="lg:col-span-1"
+              >
+                <h3 className="text-lg font-semibold text-green-400 mb-2">
+                  Positive
+                </h3>
+                <StockList items={stocksInFocus.positive} type="positive" />
+                <h3 className="text-lg font-semibold text-yellow-400 mt-4 mb-2">
+                  Caution
+                </h3>
+                <StockList items={stocksInFocus.caution} type="caution" />
+              </InfoCard>
+            </div>
+
+            {/* --- Fifth Row --- */}
+            <InfoCard
+              title="In-Depth Market Analysis"
+              icon={<Newspaper className="w-6 h-6" />}
+              className="lg:col-span-3"
+            >
+              <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+                {reportData.inDepthAnalysis}
               </div>
-            </div>
-          </InfoCard>
+            </InfoCard>
+          </div>
+        )}
 
-          {/* --- Sector Outlook (NEW) --- */}
-          <InfoCard
-            title="Sector Outlook"
-            icon={<TrendingUp className="w-6 h-6" />}
-            className="lg:col-span-1"
-          >
-            <h3 className="text-lg font-semibold text-green-400 mb-2">
-              Positive
-            </h3>
-            <StockList items={sectorOutlook.positive} type="positive" />
-            <h3 className="text-lg font-semibold text-yellow-400 mt-4 mb-2">
-              Caution
-            </h3>
-            <StockList items={sectorOutlook.caution} type="caution" />
-          </InfoCard>
-        </div>
-
-        {/* --- Third Row (NEW LAYOUT) --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* --- Stocks in Focus (MOVED & RENAMED) --- */}
-          <InfoCard
-            title="Stocks in Focus"
-            icon={<Target className="w-6 h-6" />}
-            className="lg:col-span-1"
-          >
-            <h3 className="text-lg font-semibold text-green-400 mb-2">
-              Positive
-            </h3>
-            <StockList items={stocksInFocus.positive} type="positive" />
-            <h3 className="text-lg font-semibold text-yellow-400 mt-4 mb-2">
-              Caution
-            </h3>
-            <StockList items={stocksInFocus.caution} type="caution" />
-          </InfoCard>
-
-          {/* --- In-Depth Analysis --- */}
-          <InfoCard
-            title="In-Depth Market Analysis"
-            icon={<Newspaper className="w-6 h-6" />}
-            className="lg:col-span-2"
-          >
-            <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
-              {reportData.inDepthAnalysis}
-            </div>
-          </InfoCard>
-        </div>
-
-        {/* --- Sources --- */}
-        {sources.length > 0 && (
-          <InfoCard
-            title="Research Sources"
-            icon={<ExternalLink className="w-6 h-6" />}
-          >
-            <ul className="space-y-2 list-disc list-inside">
-              {sources.map((source: { uri: string; title: string }, index) => (
-                <li key={index}>
-                  <a
-                    href={source.uri}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {source.title || source.uri}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </InfoCard>
+        {/* --- IPO Tab Content --- */}
+        {activeTab === "ipo" && (
+          <div className="space-y-6">
+            <InfoCard
+              title="IPO Listings"
+              icon={<Package className="w-6 h-6" />}
+            >
+              <IpoTable ipos={ipoListings} />
+            </InfoCard>
+          </div>
         )}
       </main>
 
@@ -785,3 +1064,4 @@ export default function App() {
     </div>
   );
 }
+
