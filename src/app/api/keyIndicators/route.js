@@ -10,33 +10,7 @@ const responseSchema = {
   type: "OBJECT",
   properties: {
     reportDate: { type: "STRING" },
-    marketOutlook: {
-      type: "OBJECT",
-      properties: {
-        india: {
-          type: "OBJECT",
-          properties: {
-            nifty: { type: "STRING" },
-            bankNifty: { type: "STRING" },
-            tone: { type: "STRING" },
-          },
-        },
-        global: { type: "STRING" },
-      },
-    },
-    globalIndices: {
-      type: "ARRAY",
-      items: {
-        type: "OBJECT",
-        properties: {
-          name: { type: "STRING" },
-          last: { type: "STRING" },
-          change: { type: "STRING" },
-          changePercent: { type: "STRING" },
-        },
-      },
-    },
-    keyIndicators: {
+        keyIndicators: {
       type: "OBJECT",
       properties: {
         indiaVix: {
@@ -63,85 +37,6 @@ const responseSchema = {
         },
       },
     },
-    fiiDiiFlows: {
-      type: "ARRAY",
-      items: {
-        type: "OBJECT",
-        properties: {
-          date: { type: "STRING" },
-          fiiNet: { type: "STRING" },
-          diiNet: { type: "STRING" },
-        },
-      },
-    },
-    sectoralPerformance: {
-      type: "ARRAY",
-      items: {
-        type: "OBJECT",
-        properties: {
-          sector: { type: "STRING" },
-          changePercent: { type: "STRING" },
-        },
-      },
-    },
-    sectorOutlook: {
-      type: "OBJECT",
-      properties: {
-        positive: { type: "ARRAY", items: { type: "STRING" } },
-        caution: { type: "ARRAY", items: { type: "STRING" } },
-      },
-    },
-    stocksInFocus: {
-      type: "OBJECT",
-      properties: {
-        positive: { type: "ARRAY", items: { type: "STRING" } },
-        caution: { type: "ARRAY", items: { type: "STRING" } },
-      },
-    },
-    tradingView: {
-      type: "OBJECT",
-      properties: {
-        nifty: { type: "STRING" },
-        bankNifty: { type: "STRING" },
-        strategy: { type: "STRING" },
-        niftyLevels: {
-          type: "OBJECT",
-          properties: {
-            current: { type: "STRING" }, // Changed from NUMBER
-            support1: { type: "STRING" }, // Changed from NUMBER
-            support2: { type: "STRING" }, // Changed from NUMBER
-            resistance1: { type: "STRING" }, // Changed from NUMBER
-            resistance2: { type: "STRING" }, // Changed from NUMBER
-          },
-        },
-        bankNiftyLevels: {
-          type: "OBJECT",
-          properties: {
-            current: { type: "STRING" }, // Changed from NUMBER
-            support1: { type: "STRING" }, // Changed from NUMBER
-            support2: { type: "STRING" }, // Changed from NUMBER
-            resistance1: { type: "STRING" }, // Changed from NUMBER
-            resistance2: { type: "STRING" }, // Changed from NUMBER
-          },
-        },
-      },
-    },
-    ipoListings: {
-      type: "ARRAY",
-      items: {
-        type: "OBJECT",
-        properties: {
-          ipoName: { type: "STRING" },
-          gmp: { type: "STRING" },
-          applyStartDate: { type: "STRING" },
-          applyEndDate: { type: "STRING" },
-          listingDate: { type: "STRING" },
-          companySummary: { type: "STRING" },
-          companyDetailsUrl: { type: "STRING" },
-        },
-      },
-    },
-    inDepthAnalysis: { type: "STRING" },
   },
 };
 
@@ -165,7 +60,7 @@ export async function GET() {
 
     let response;
     let retries = 0;
-    const maxRetries = 3; // Increased max retries
+    const maxRetries = 2; // Increased max retries
     let lastError = null;
 
     while (retries <= maxRetries) {
